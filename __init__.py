@@ -10,9 +10,19 @@ bl_info = {
     "category": "3D View",
 }
 
+from typing import Set
 import bpy
+from bpy.types import Context
 from . import functions
 from . import lists
+import textwrap
+
+def _label_multiline(context, text, parent):
+    chars = int(context.region.width / 7)   # 7 pix on 1 character
+    wrapper = textwrap.TextWrapper(width=chars)
+    text_lines = wrapper.wrap(text=text)
+    for text_line in text_lines:
+        parent.label(text=text_line)
 
 bpy.types.Scene.arms_reverse = bpy.props.BoolProperty(name="Arm Reverse", default=False)
 
@@ -28,12 +38,22 @@ class main_panel(bpy.types.Panel):
         col = layout.column(align=True)
         grid = col.grid_flow(row_major=True)
         row = grid.row(align=True)
-        row.label(text='Click button after selecting MMD mesh')
+
+        _label_multiline(context=context,
+                        text='Click button after selecting MMD mesh',
+                        parent=col)
+        
         col.operator("cd_ue4_functions.translate_execute", text='Execute', icon="ARMATURE_DATA")
-        col.label(text='If arm bones are reverse, just make below true.')
+
+        _label_multiline(context=context,
+                         text='If arm bones are reverse, just make below true.',
+                         parent=col)
+
         col.prop(context.scene, "arms_reverse", text="Reverse Arm Roll")
-        col.label(text='If some bones still not face correctly, use buttons below to adjust by yourself')
-        col.label(text="These operation will set seletected bones's use_connect parameter to FALSE!")
+
+        _label_multiline(context=context,
+                         text="If some bones still not face correctly, use buttons below to adjust by yourself. These operation will set seletected bones's use_connect parameter to FALSE!",
+                         parent=col)
 
         operator1 = col.operator('cd_ue4_functions.rotate', text='X Rotate 90')
         operator2 = col.operator('cd_ue4_functions.rotate', text='X Rotate -90')
@@ -59,6 +79,11 @@ class main_panel(bpy.types.Panel):
         
         operator6.axis = "Z"
         operator6.degree = -90
+
+        _label_multiline(context=context,
+                         text="The button below says:'I can help you pose the model to ue4 mannequin after you finishing adjust bones in edit mode'",
+                         parent=col)
+        col.operator('cd_ue4_functions.pose_model', text='Pose Model')
 
 class execute_functions(bpy.types.Operator):
     bl_label = "Execute Functions"
@@ -211,11 +236,11 @@ class execute_functions(bpy.types.Operator):
         return{'FINISHED'}
 
 class bone_rotate_execute(bpy.types.Operator):
-    bl_label = "Execute Functions"
+    bl_label = "Rotate Bones"
     bl_idname = "cd_ue4_functions.rotate"
 
-    axis: bpy.props.StringProperty()
-    degree: bpy.props.FloatProperty()
+    axis: bpy.props.StringProperty() # type: ignore
+    degree: bpy.props.FloatProperty() # type: ignore
 
     def execute(self, context):
         # 检查当前编辑的对象是否是一个骨骼
@@ -236,13 +261,48 @@ class bone_rotate_execute(bpy.types.Operator):
         bpy.ops.wm.redraw_timer()
         return{'FINISHED'}
 
+class pose_model(bpy.types.Operator):
+    bl_label = "Pose Model"
+    bl_idname = "cd_ue4_functions.pose_model"
+
+    def execute(self, context):
+        # 检查当前编辑的对象是否是一个骨骼
+        if bpy.context.object and bpy.context.object.type == 'ARMATURE':
+            # 获取当前编辑的对象（应该是一个armature）
+            obj = bpy.context.object
+            bpy.ops.object.mode_set(mode='POSE')
+
+            constraint_list = {
+                ("ik_foot_l", "foot_l"),
+                ("ik_foot_r", "foot_r"),
+                ("ik_hand_l", "hand_l"),
+                ("ik_hand_r", "hand_r"),
+                ("ik_hand_gun", "hand_r"),
+            }
+            for ik_name, bone_name in constraint_list:
+                bone = obj.pose.bones.get(ik_name)
+                constraint = bone.constraints.new(type='COPY_TRANSFORMS')
+                # 在修饰器属性中设置目标和目标空间等属性
+                constraint.target = bpy.data.objects[obj.name]  # 替换成你要复制变换的目标对象的名称
+                constraint.subtarget = bone_name  # 替换成你要复制变换的目标骨骼的名称
+                constraint.target_space = 'WORLD'
+                constraint.owner_space = 'WORLD'
+                constraint.influence = 1.0  # 设置影响度
+
+            for name, axis, angle in lists.pose_rot_list:
+                functions.rotate_bone_local_axis_pose_mode(obj, name, axis, angle)
+        return{'FINISHED'}
+
 def register():
-    bpy.utils.register_class(main_panel)
     bpy.utils.register_class(execute_functions)
     bpy.utils.register_class(bone_rotate_execute)
+    bpy.utils.register_class(pose_model)
+    bpy.utils.register_class(main_panel)
 def unregister():
     bpy.utils.unregister_class(main_panel)
     bpy.utils.unregister_class(execute_functions)
     bpy.utils.unregister_class(bone_rotate_execute)
+    bpy.utils.unregister_class(pose_model)
+
 if __name__ == "__main__":
     register()

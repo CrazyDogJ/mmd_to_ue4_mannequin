@@ -75,6 +75,36 @@ def rotate_bone_local_axis_edit_mode(armature_data, bone_name, axis, angle_degre
         else:
             print("找不到指定的骨骼：%s" % bone_name)
 
+def rotate_bone_local_axis_pose_mode(armature_obj, bone_name, axis, angle_degrees):
+    # 获取骨骼编辑数据
+    pose_bones = armature_obj.pose.bones
+    bone = pose_bones.get(bone_name)
+    if bone is not None:
+        # 将角度转换为弧度
+        angle_radians = math.radians(angle_degrees)
+        # 打印骨骼的变换矩阵
+        print("骨骼 %s 的变换矩阵：" % bone_name)
+        for row in bone.matrix:
+            print(row)
+        else:
+            print("找不到指定的骨骼：%s" % bone_name)
+        # 根据指定的轴进行旋转
+        if axis == 'X':
+            rotation_matrix = mathutils.Matrix.Rotation(angle_radians, 4, 'X')
+        elif axis == 'Y':
+            rotation_matrix = mathutils.Matrix.Rotation(angle_radians, 4, 'Y')
+        elif axis == 'Z':
+            rotation_matrix = mathutils.Matrix.Rotation(angle_radians, 4, 'Z')
+
+        # Apply the rotation to the bone's matrix
+        bone.matrix = bone.matrix @ rotation_matrix
+        # 打印骨骼的变换矩阵
+        print("骨骼 %s 的变换矩阵：" % bone_name)
+        for row in rotation_matrix:
+            print(row)
+        else:
+            print("找不到指定的骨骼：%s" % bone_name)
+
 def set_bone_direction(armature_data, bone_name, direction_vector):
  
     # 获取指定名称的骨骼

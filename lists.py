@@ -257,3 +257,48 @@ bones_arm_r = {
     "lowerarm_r",
     "lowerarm_twist_01_r"
 }
+
+pose_rot_list = {
+    ("upperarm_l", 'Z', 5),
+    ("upperarm_r", 'Z', 5),
+    ("lowerarm_l", 'Z', -30),
+    ("lowerarm_r", 'Z', -30),
+    ("hand_l", 'Z', 5),
+    ("hand_r", 'Z', 5),
+    ("thigh_l", 'Y', -4),
+    ("thigh_r", 'Y', -4),
+    ("foot_l", 'Y', 4),
+    ("foot_r", 'Y', 4),
+
+    ("index_01_l", 'Z', 15),
+    ("index_02_l", 'Z', 15),
+    ("index_03_l", 'Z', 15),
+
+    ("middle_01_l", 'Z', 15),
+    ("middle_02_l", 'Z', 15),
+    ("middle_03_l", 'Z', 15),
+
+    ("ring_01_l", 'Z', 15),
+    ("ring_02_l", 'Z', 15),
+    ("ring_03_l", 'Z', 15),
+
+    ("pinky_01_l", 'Z', 15),
+    ("pinky_02_l", 'Z', 15),
+    ("pinky_03_l", 'Z', 15),
+
+    ("index_01_r", 'Z', 15),
+    ("index_02_r", 'Z', 15),
+    ("index_03_r", 'Z', 15),
+
+    ("middle_01_r", 'Z', 15),
+    ("middle_02_r", 'Z', 15),
+    ("middle_03_r", 'Z', 15),
+
+    ("ring_01_r", 'Z', 15),
+    ("ring_02_r", 'Z', 15),
+    ("ring_03_r", 'Z', 15),
+
+    ("pinky_01_r", 'Z', 15),
+    ("pinky_02_r", 'Z', 15),
+    ("pinky_03_r", 'Z', 15),
+}
