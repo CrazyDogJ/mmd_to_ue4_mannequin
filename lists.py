@@ -135,6 +135,16 @@ namelist = [
 
 ]
 
+namelist_finger_l = {"index_01_l","index_02_l","index_03_l",
+                             "middle_01_l","middle_02_l","middle_03_l",
+                             "ring_01_l","ring_02_l","ring_03_l",
+                             "pinky_01_l","pinky_02_l","pinky_03_l",}
+
+namelist_finger_r = {"index_01_r","index_02_r","index_03_r",
+                             "middle_01_r","middle_02_r","middle_03_r",
+                             "ring_01_r","ring_02_r","ring_03_r",
+                             "pinky_01_r","pinky_02_r","pinky_03_r",}
+
 # 足D等骨骼列表
 namelist_1 = [
 ("足D.L",
@@ -301,4 +311,17 @@ pose_rot_list = {
     ("pinky_01_r", 'Z', 15),
     ("pinky_02_r", 'Z', 15),
     ("pinky_03_r", 'Z', 15),
+}
+
+spine_rot_list = {
+    ("pelvis", 'X', 90),
+    ("pelvis", 'Y', -90),
+    ("spine_01", 'X', -90),
+    ("spine_01", 'Y', -90),
+    ("spine_02", 'X', -90),
+    ("spine_02", 'Y', -90),
+    ("neck_01", 'X', -90),
+    ("neck_01", 'Y', -90),
+    ("head", 'X', -90),
+    ("head", 'Y', -90)
 }
