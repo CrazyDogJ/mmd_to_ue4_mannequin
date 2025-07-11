@@ -17,6 +17,7 @@ import mathutils
 from . import functions
 from . import lists
 import textwrap
+import os
 
 def _label_multiline(context, text, parent):
     chars = int(context.region.width / 7)   # 7 pix on 1 character
@@ -117,6 +118,21 @@ class bone_pose_panel(bpy.types.Panel):
                          text="The button below says:'I can help you pose the model to ue4 mannequin after you finishing adjust bones in edit mode, but you can adjust them manully later'",
                          parent=col)
         col.operator('cd_ue4_functions.pose_model', text='Pose Model', icon="POSE_HLT")
+
+class useful_tools_panel(bpy.types.Panel):
+    bl_label = "Useful tools"
+    bl_idname = "Useful tools"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "To UE4"
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        grid = col.grid_flow(row_major=True)
+        row = grid.row(align=True)
+
+        col.operator('object.add_vertex_groups_from_bones', text='Add Vertex Groups By Bones', icon="POSE_HLT")
 
 class bone_name_mapping_panel(bpy.types.Panel):
     bl_label = "Bones Mapping"
@@ -518,42 +534,201 @@ class pose_model(bpy.types.Operator):
                 functions.rotate_bone_local_axis_pose_mode(obj, name, axis, angle)
         return{'FINISHED'}
 
+# 创建骨架的操作
+class AddCustomArmature(bpy.types.Operator):
+    bl_idname = "object.add_custom_armature"
+    bl_label = "Add UE4 Mannequin"
+    bl_description = "Creates a ue4 mannequin armature"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        addon_dir = os.path.dirname(os.path.abspath(__file__))
+        blend_file = os.path.join(addon_dir, "mannequin_ref_skeleton.blend")
+        armature_path = "Object/root"  # 你的骨架名称
+        bpy.ops.wm.append(
+        filepath=os.path.join(blend_file, armature_path),
+        directory=os.path.join(blend_file, "Object"),
+        filename="root"
+        )
+
+        return {'FINISHED'}
+
+def menu_func(self, context):
+    self.layout.operator(AddCustomArmature.bl_idname, icon='OUTLINER_OB_ARMATURE')
+
+class OBJECT_OT_add_vertex_groups_from_bones(bpy.types.Operator):
+    """从选中的骨骼向目标网格添加对应的顶点组"""
+    bl_idname = "object.add_vertex_groups_from_bones"
+    bl_label = "Add Vertex Groups from Bones"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        armature = context.object
+        if armature.type != 'ARMATURE':
+            self.report({'WARNING'}, "请选中一个骨骼对象")
+            return {'CANCELLED'}
+
+        # 获取选中的骨骼名字
+        selected_bones = [bone.name for bone in context.selected_pose_bones]
+        if not selected_bones:
+            self.report({'WARNING'}, "请在姿势模式下选中骨骼")
+            return {'CANCELLED'}
+
+        # 假设目标网格是选中的另一个对象
+        target_mesh = None
+        for obj in context.selected_objects:
+            if obj.type == 'MESH' and obj != armature:
+                target_mesh = obj
+                break
+
+        if not target_mesh:
+            self.report({'WARNING'}, "请同时选中一个网格对象")
+            return {'CANCELLED'}
+
+        # 添加对应的顶点组
+        existing_groups = {vg.name for vg in target_mesh.vertex_groups}
+        for bone_name in selected_bones:
+            if bone_name not in existing_groups:
+                target_mesh.vertex_groups.new(name=bone_name)
+
+        self.report({'INFO'}, f"添加 {len(selected_bones)} 个顶点组")
+        return {'FINISHED'}
+
+class ShapeKeyGroupProperty(bpy.types.PropertyGroup):
+    obj: bpy.props.PointerProperty(type=bpy.types.Object) # type: ignore
+
+class BATCH_SHAPE_KEY_ObjectList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        row = layout.row(align=True)
+        row.label(text=item.obj.name, icon='OBJECT_DATA')
+
+class BatchShapeKeyPanel(bpy.types.Panel):
+    bl_label = "Batch Shape Key Controller"
+    bl_idname = "VIEW3D_PT_batch_shapekey"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'To UE4'
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        grid = col.grid_flow(row_major=True)
+
+        box = layout.box()
+        row = box.row()
+        row.operator("batchshape.add_object", text="添加选中物体")
+        row.operator("batchshape.clear_objects", text="清空")
+
+        row = box.row()
+        row.operator("batchshape.remove_object", text="移除选定物体")
+        row.operator("batchshape.refresh_keys", text="刷新形态键")
+
+        _label_multiline(context=context,
+                         text="Selected Objects",
+                         parent=col)
+        
+        scene = context.scene
+
+        col.template_list("BATCH_SHAPE_KEY_ObjectList", 
+                          "batch_shape_key_objects", 
+                          scene, "batchshape_objects", 
+                          scene, "batchshape_index")
+        
+        box = layout.box()
+        common_keys = functions.get_common_shapekeys(scene.batchshape_objects)
+        for key_name in common_keys:
+            box.prop(scene, f"sk_val_{key_name}", text=key_name)
+
+
+class AddObjectOperator(bpy.types.Operator):
+    bl_idname = "batchshape.add_object"
+    bl_label = "添加选中物体"
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            if not any(item.obj == obj for item in context.scene.batchshape_objects):
+                item = context.scene.batchshape_objects.add()
+                item.obj = obj
+        functions.update_common_key_values(context)
+        return {'FINISHED'}
+
+class RemoveObejctOperator(bpy.types.Operator):
+    bl_idname = "batchshape.remove_object"
+    bl_label = "移除选定物体"
+
+    def execute(self, context):
+        context.scene.batchshape_objects.remove(context.scene.batchshape_index)
+        return {'FINISHED'}
+
+class ClearObjectsOperator(bpy.types.Operator):
+    bl_idname = "batchshape.clear_objects"
+    bl_label = "清空物体"
+
+    def execute(self, context):
+        context.scene.batchshape_objects.clear()
+        functions.cleanup_key_properties(context)
+        return {'FINISHED'}
+    
+class RefreshObjectsKeys(bpy.types.Operator):
+    bl_idname = "batchshape.refresh_keys"
+    bl_label = "刷新形态键"
+
+    def execute(self, context):
+        functions.update_common_key_values(context)
+        return {'FINISHED'}
+
+classList = {
+    execute_functions,
+    bone_rotate_execute,
+    pose_model,
+    main_panel,
+    bone_edit_panel,
+    bone_pose_panel,
+    bone_name_mapping_panel,
+    bone_name_mapping,
+    RENAME_MAPPING_OT_AddItem,
+    RENAME_MAPPING_OT_RemoveItem,
+    RENAME_MAPPING_UL_items,
+    load_from_default,
+    RENAME_MAPPING_OT_ImportFromFile,
+    RENAME_BY_MAPPING,
+    ALIGN_BONES,
+    AddCustomArmature,
+    OBJECT_OT_add_vertex_groups_from_bones,
+    useful_tools_panel,
+
+    ShapeKeyGroupProperty,
+    BatchShapeKeyPanel,
+    AddObjectOperator,
+    RemoveObejctOperator,
+    ClearObjectsOperator,
+    RefreshObjectsKeys,
+    BATCH_SHAPE_KEY_ObjectList,
+}
+
 def register():
-    bpy.utils.register_class(execute_functions)
-    bpy.utils.register_class(bone_rotate_execute)
-    bpy.utils.register_class(pose_model)
-    bpy.utils.register_class(main_panel)
-    bpy.utils.register_class(bone_edit_panel)
-    bpy.utils.register_class(bone_pose_panel)
-    bpy.utils.register_class(bone_name_mapping_panel)
-    bpy.utils.register_class(bone_name_mapping)
-    bpy.utils.register_class(RENAME_MAPPING_OT_AddItem)
-    bpy.utils.register_class(RENAME_MAPPING_OT_RemoveItem)
-    bpy.utils.register_class(RENAME_MAPPING_UL_items)
-    bpy.utils.register_class(load_from_default)
-    bpy.utils.register_class(RENAME_MAPPING_OT_ImportFromFile)
-    bpy.utils.register_class(RENAME_BY_MAPPING)
-    bpy.utils.register_class(ALIGN_BONES)
+    for classSingle in classList :
+        bpy.utils.register_class(classSingle)
+
     bpy.types.Scene.mapping_items = bpy.props.CollectionProperty(type=bone_name_mapping)
     bpy.types.Scene.mapping_index = bpy.props.IntProperty(default=0)
+    bpy.types.VIEW3D_MT_armature_add.append(menu_func)
+
+    # Batch shape keys
+    bpy.types.Scene.batchshape_objects = bpy.props.CollectionProperty(type=ShapeKeyGroupProperty)
+    bpy.types.Scene.batchshape_index = bpy.props.IntProperty(name="Index for Shape Key Object List", default=0)
+
 def unregister():
-    bpy.utils.unregister_class(main_panel)
-    bpy.utils.unregister_class(bone_edit_panel)
-    bpy.utils.unregister_class(bone_pose_panel)
-    bpy.utils.unregister_class(execute_functions)
-    bpy.utils.unregister_class(bone_rotate_execute)
-    bpy.utils.unregister_class(pose_model)
-    bpy.utils.unregister_class(bone_name_mapping_panel)
-    bpy.utils.unregister_class(bone_name_mapping)
-    bpy.utils.unregister_class(RENAME_MAPPING_OT_AddItem)
-    bpy.utils.unregister_class(RENAME_MAPPING_OT_RemoveItem)
-    bpy.utils.unregister_class(RENAME_MAPPING_UL_items)
-    bpy.utils.unregister_class(load_from_default)
-    bpy.utils.unregister_class(RENAME_MAPPING_OT_ImportFromFile)
-    bpy.utils.unregister_class(RENAME_BY_MAPPING)
-    bpy.utils.unregister_class(ALIGN_BONES)
+    for classSingle in classList :
+        bpy.utils.unregister_class(classSingle)
+
     del bpy.types.Scene.mapping_items
     del bpy.types.Scene.mapping_index
+    bpy.types.VIEW3D_MT_armature_add.remove(menu_func)
+
+    # Batch shape keys
+    del bpy.types.Scene.batchshape_objects
+    del bpy.types.Scene.batchshape_index
 
 if __name__ == "__main__":
     register()
