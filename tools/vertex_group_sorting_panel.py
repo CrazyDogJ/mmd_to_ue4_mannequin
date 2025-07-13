@@ -1,5 +1,5 @@
 import bpy
-from . import shared_functions
+from .. import shared_functions
 
 def export_list_to_txt(filepath, string_list):
     with open(filepath, 'w', encoding='utf-8') as f:
@@ -33,7 +33,7 @@ class VIEW3D_PT_DragSortListPanel(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_DragSortListPanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'To UE4'
+    bl_category = "Cd Tools"
 
     def draw(self, context):
         layout = self.layout
@@ -217,6 +217,16 @@ class VERTEXGROUPLIST_OT_ImportFile(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
     
+# Op : Update selected object active vertex group
+def SelectVertexGroup(self, context):
+    target_name = context.scene.vertex_groups_selected[context.scene.vertex_groups_selected_index].name
+    if context.active_object:
+        obj = context.active_object
+        for i, vg in enumerate(obj.vertex_groups):
+            if vg.name == target_name:
+                obj.vertex_groups.active_index = i
+                break
+
 # 注册类
 classes = (
     Item,
@@ -235,7 +245,7 @@ def register():
         bpy.utils.register_class(cls)
 
     bpy.types.Scene.vertex_groups_selected = bpy.props.CollectionProperty(type=Item)
-    bpy.types.Scene.vertex_groups_selected_index = bpy.props.IntProperty()
+    bpy.types.Scene.vertex_groups_selected_index = bpy.props.IntProperty(update=SelectVertexGroup)
 
 def unregister():
     for cls in classes:

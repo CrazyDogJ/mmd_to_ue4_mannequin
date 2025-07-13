@@ -9,7 +9,7 @@ def bind_bone_to_parent(armature_data, child_bone_name, parent_bone_name):
     parent_bone = armature_data.edit_bones.get(parent_bone_name)
     
     if child_bone:
-        if parent_bone_name is "root":
+        if parent_bone_name == "root":
             child_bone.parent = None
         elif parent_bone:
             # 设置子级骨骼的父级骨骼

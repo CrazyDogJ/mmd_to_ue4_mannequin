@@ -1,5 +1,5 @@
 import bpy
-from . import shared_functions
+from .. import shared_functions
 import math
 import mathutils
 
@@ -38,7 +38,7 @@ class bone_edit_panel(bpy.types.Panel):
     bl_idname = "CD_PT_edit_bones"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "To UE4"
+    bl_category = "Cd Tools"
 
     def draw(self, context):
         layout = self.layout
@@ -91,7 +91,7 @@ class bone_edit_panel(bpy.types.Panel):
         box.label(text="Description", icon="QUESTION")
         box = col.box()
         shared_functions.label_multiline(context=context, 
-                        text="This tool is useful for editing bone's facing", 
+                        text="This tool is useful for editing bone's facing, TIPS: You should look towards the positive direction of a axis", 
                         parent=box)
 
 class bone_rotate_execute(bpy.types.Operator):

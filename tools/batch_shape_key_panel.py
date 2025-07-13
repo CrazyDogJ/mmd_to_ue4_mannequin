@@ -1,5 +1,5 @@
 import bpy
-from . import shared_functions
+from .. import shared_functions
 
 # 获取多个对象中公共的Shape Key名字
 def get_common_shapekeys(object_list):
@@ -102,7 +102,7 @@ class BatchShapeKeyPanel(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_batch_shapekey"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'To UE4'
+    bl_category = "Cd Tools"
 
     def draw(self, context):
         layout = self.layout
