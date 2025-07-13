@@ -10,33 +10,26 @@ bl_info = {
     "category": "3D View",
 }
 
-from typing import Set
 import bpy
-from bpy.types import Context
-import mathutils
 from . import functions
 from . import lists
-import textwrap
 import os
+from . import shared_functions
 
-def _label_multiline(context, text, parent):
-    chars = int(context.region.width / 7)   # 7 pix on 1 character
-    wrapper = textwrap.TextWrapper(width=chars)
-    text_lines = wrapper.wrap(text=text)
-    for text_line in text_lines:
-        parent.label(text=text_line)
+#bone edit
+from . import bone_rotation_panel
+#rename
+from . import bones_rename_mapping_panel
+#import batch shape key panel tool
+from . import batch_shape_key_panel
+#import vertex group sorting panel tool
+from . import vertex_group_sorting_panel
 
 bpy.types.Scene.arms_reverse = bpy.props.BoolProperty(name="Arm Reverse", default=False)
 
-class bone_name_mapping(bpy.types.PropertyGroup):
-    bone1: bpy.props.StringProperty(
-    ) # type: ignore
-    bone2: bpy.props.StringProperty(
-    ) # type: ignore
-
-class main_panel(bpy.types.Panel):
+class VIEW3D_PT_main_panel(bpy.types.Panel):
     bl_label = "To UE4 Execute"
-    bl_idname = "To UE4 Execute"
+    bl_idname = "VIEW3D_PT_To_UE4_Execute"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "To UE4"
@@ -47,63 +40,21 @@ class main_panel(bpy.types.Panel):
         grid = col.grid_flow(row_major=True)
         row = grid.row(align=True)
 
-        _label_multiline(context=context,
+        shared_functions.label_multiline(context=context,
                         text='Click button after selecting MMD mesh',
                         parent=col)
         
         col.operator("cd_ue4_functions.translate_execute", text='Execute', icon="ARMATURE_DATA")
 
-        _label_multiline(context=context,
+        shared_functions.label_multiline(context=context,
                          text='If arm bones are reverse, just make below true.',
                          parent=col)
 
         col.prop(context.scene, "arms_reverse", text="Reverse Arm Roll")
 
-class bone_edit_panel(bpy.types.Panel):
-    bl_label = "Edit Bones"
-    bl_idname = "Edit Bones"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "To UE4"
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column(align=True)
-        grid = col.grid_flow(row_major=True)
-        row = grid.row(align=True)
-
-        _label_multiline(context=context,
-                         text="If some bones still not face correctly, use buttons below to adjust by yourself. These operation will set seletected bones's use_connect parameter to FALSE!",
-                         parent=col)
-
-        operator1 = col.operator('cd_ue4_functions.rotate', text='X Rotate 90')
-        operator2 = col.operator('cd_ue4_functions.rotate', text='X Rotate -90')
-        operator3 = col.operator('cd_ue4_functions.rotate', text='Y Rotate 90')
-        operator4 = col.operator('cd_ue4_functions.rotate', text='Y Rotate -90')
-        operator5 = col.operator('cd_ue4_functions.rotate', text='Z Rotate 90')
-        operator6 = col.operator('cd_ue4_functions.rotate', text='Z Rotate -90')
-
-        operator1.axis = "X"
-        operator1.degree = 90
-        
-        operator2.axis = "X"
-        operator2.degree = -90
-        
-        operator3.axis = "Y"
-        operator3.degree = 90
-        
-        operator4.axis = "Y"
-        operator4.degree = -90
-        
-        operator5.axis = "Z"
-        operator5.degree = 90
-        
-        operator6.axis = "Z"
-        operator6.degree = -90
-
 class bone_pose_panel(bpy.types.Panel):
     bl_label = "Pose Bones"
-    bl_idname = "Pose Bones"
+    bl_idname = "CD_PT_pose_bones"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "To UE4"
@@ -114,14 +65,14 @@ class bone_pose_panel(bpy.types.Panel):
         grid = col.grid_flow(row_major=True)
         row = grid.row(align=True)
 
-        _label_multiline(context=context,
+        shared_functions.label_multiline(context=context,
                          text="The button below says:'I can help you pose the model to ue4 mannequin after you finishing adjust bones in edit mode, but you can adjust them manully later'",
                          parent=col)
         col.operator('cd_ue4_functions.pose_model', text='Pose Model', icon="POSE_HLT")
 
 class useful_tools_panel(bpy.types.Panel):
     bl_label = "Useful tools"
-    bl_idname = "Useful tools"
+    bl_idname = "CD_PT_useful_tools"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "To UE4"
@@ -129,213 +80,12 @@ class useful_tools_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
-        grid = col.grid_flow(row_major=True)
-        row = grid.row(align=True)
-
         col.operator('object.add_vertex_groups_from_bones', text='Add Vertex Groups By Bones', icon="POSE_HLT")
-
-class bone_name_mapping_panel(bpy.types.Panel):
-    bl_label = "Bones Mapping"
-    bl_idname = "Bones Mapping"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "To UE4"
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column(align=True)
-        grid = col.grid_flow(row_major=True)
-
-        _label_multiline(context=context,
-                         text="Bones rename mapping",
-                         parent=col)
-        
-        scene = context.scene
-
-        row = layout.row(align=True)
-        row.template_list("RENAME_MAPPING_UL_items", "rename_mapping", scene, "mapping_items", scene, "mapping_index")
-
-        col = row.column(align=True)
-        col.operator("rename_mapping.add_item", icon="ADD", text="")
-        col.operator("rename_mapping.remove_item", icon="REMOVE", text="")
-        col.operator("rename_mapping.load_from_default", icon="FILE_REFRESH", text="")
-        col.operator("rename_mapping.import_from_file", icon="IMPORT", text="")
-        operator_1to2 = col.operator("rename_mapping.rename", icon="EVENT_RIGHT_ARROW", text="")
-        operator_1to2.bone1_to_bone2 = True
-        operator_2to1 = col.operator("rename_mapping.rename", icon="EVENT_LEFT_ARROW", text="")
-        operator_2to1.bone1_to_bone2 = False
-
-        col.operator("rename_mapping.align_bones", icon="FILE_REFRESH", text="")
-
-        if scene.mapping_items and scene.mapping_index < len(scene.mapping_items):
-            item = scene.mapping_items[scene.mapping_index]
-            layout.prop(item, "bone1", text="Bone 1")
-            layout.prop(item, "bone2", text="Bone 2")
-
-class RENAME_MAPPING_UL_items(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            row = layout.row(align=True)
-            row.label(text=item.bone1, icon='BONE_DATA')
-            row.label(icon="ARROW_LEFTRIGHT")
-            row.label(text=item.bone2, icon='BONE_DATA')
-        elif self.layout_type in {'GRID'}:
-            layout.alignment = 'CENTER'
-            layout.label(text="")
-
-class RENAME_MAPPING_OT_AddItem(bpy.types.Operator):
-    bl_idname = "rename_mapping.add_item"
-    bl_label = "Add mapping"
-
-    def execute(self, context):
-        scene = context.scene
-        scene.mapping_items.add()
-        scene.mapping_index = len(scene.mapping_items) - 1
-        return {'FINISHED'}
-    
-class RENAME_MAPPING_OT_RemoveItem(bpy.types.Operator):
-    bl_idname = "rename_mapping.remove_item"
-    bl_label = "Remove mapping"
-
-    def execute(self, context):
-        scene = context.scene
-        index = scene.mapping_index
-
-        if scene.mapping_items:
-            scene.mapping_items.remove(index)
-            scene.mapping_index = max(0, index - 1)
-        return {'FINISHED'}
-
-class load_from_default(bpy.types.Operator):
-    bl_idname = "rename_mapping.load_from_default"
-    bl_label = "Load default mapping"
-
-    def execute(self, context):
-        scene = context.scene
-
-        scene.mapping_items.clear()
-        for bone1, bone2 in lists.namelist:
-            item = scene.mapping_items.add()
-            item.bone1 = bone1
-            item.bone2 = bone2
-
-        scene.mapping_index = len(scene.mapping_items) - 1
-            
-        return {'FINISHED'}
-
-class RENAME_MAPPING_OT_ImportFromFile(bpy.types.Operator):
-    bl_idname = "rename_mapping.import_from_file"
-    bl_label = "Import from file"
-
-    # 声明一个字符串属性，用于存储文件路径
-    filepath: bpy.props.StringProperty(
-        name="File Path",
-        description="选择要导入的文件",
-        subtype='FILE_PATH'  # 使其成为一个文件路径
-    ) # type: ignore
-
-    def execute(self, context):
-        scene = context.scene
-
-        # 获取文件路径
-        file_path = self.filepath
-
-        # 如果文件路径为空，直接返回
-        if not file_path:
-            self.report({'ERROR'}, "未选择文件")
-            return {'CANCELLED'}
-
-        # 假设文件格式为：每行 "original_name,target_name"
-        try:
-            with open(file_path, 'r') as file:
-                for line in file:
-                    if line.strip() and not line.startswith("#"):
-                        name, target = line.strip().split(',')
-                        item = scene.mapping_items.add()
-                        item.bone1 = name
-                        item.bone2 = target
-
-            scene.mapping_index = len(scene.mapping_items) - 1
-            self.report({'INFO'}, "文件导入成功")
-        except Exception as e:
-            self.report({'ERROR'}, f"文件导入失败: {e}")
-        
-        return {'FINISHED'}
-
-    # 打开文件浏览器
-    def invoke(self, context, event):
-        # 弹出文件浏览器，选择文件
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-
-class RENAME_BY_MAPPING(bpy.types.Operator):
-    bl_idname = "rename_mapping.rename"
-    bl_label = "Rename bones"
-
-    bone1_to_bone2: bpy.props.BoolProperty() # type: ignore
-    def execute(self, context):
-        scene = context.scene
-        selected_obj = bpy.context.active_object
-
-        if selected_obj.type == 'ARMATURE':
-            selected_armature = selected_obj
-            selected_armature.select_set(True)
-            bpy.context.view_layer.objects.active = selected_armature
-            bpy.ops.object.mode_set(mode='EDIT')
-            armature = selected_armature.data
-            for item in scene.mapping_items:
-                if self.bone1_to_bone2:
-                    name = item.bone1
-                    newname = item.bone2
-                else:
-                    name = item.bone2
-                    newname = item.bone1
-
-                idx = armature.edit_bones.find(name)
-                if idx != -1:
-                    bo = armature.edit_bones[idx]
-                    bo.name = newname
-                else: #Not found
-                    #Do something
-                    pass
-        return{'FINISHED'}
-
-class ALIGN_BONES(bpy.types.Operator):
-    bl_label = "Align bones"
-    bl_idname = "rename_mapping.align_bones"
-
-    def execute(self, context):
-        selected_objects = bpy.context.selected_objects
-        active_object = bpy.context.active_object
-        
-        if len(selected_objects) == 2:
-            try:
-                other_obj = next(obj for obj in selected_objects if obj != active_object)
-            except StopIteration:
-                other_obj = None  # 处理未找到的情况
-            
-            if active_object.type == 'ARMATURE' and other_obj.type == 'ARMATURE':
-                mmd_skeleton = active_object
-                ref_skeleton = other_obj
-
-                ##self.report({'INFO'}, str(mmd_skeleton))
-
-                bpy.ops.object.mode_set(mode='EDIT')
-                for item in context.scene.mapping_items:
-                    find_bone1 = mmd_skeleton.data.edit_bones.get(item.bone1)
-                    find_bone2 = ref_skeleton.data.edit_bones.get(item.bone2)
-                    
-                    if find_bone1 is not None and find_bone2 is not None:
-                        find_bone1.head = find_bone2.head
-                        if len(find_bone2.children) > 0:
-                            find_bone2_child = find_bone2.children[0]
-                            if find_bone2_child is not None:
-                                find_bone1.tail = find_bone2_child.head
-                        else:
-                            find_bone1.matrix = find_bone2.matrix
-                            find_bone1.length = 1.0
-        
-        return {'FINISHED'}
+        box = col.box()
+        box.label(text="Description", icon="QUESTION")
+        shared_functions.label_multiline(context=context,
+                         text="Select object you want to add, select bones you want to add in pose mode and press it",
+                         parent=box)
 
 class execute_functions(bpy.types.Operator):
     bl_label = "Execute Functions"
@@ -475,32 +225,6 @@ class execute_functions(bpy.types.Operator):
                 
         return{'FINISHED'}
 
-class bone_rotate_execute(bpy.types.Operator):
-    bl_label = "Rotate Bones"
-    bl_idname = "cd_ue4_functions.rotate"
-
-    axis: bpy.props.StringProperty() # type: ignore
-    degree: bpy.props.FloatProperty() # type: ignore
-
-    def execute(self, context):
-        # 检查当前编辑的对象是否是一个骨骼
-        if bpy.context.object and bpy.context.object.type == 'ARMATURE':
-            # 获取当前编辑的对象（应该是一个armature）
-            obj = bpy.context.edit_object
-
-            # 获取选中的骨骼
-            selected_bones = [bone for bone in obj.data.edit_bones if bone.select]
-
-            # 输出选中的骨骼名称
-            for bone in selected_bones:
-                bone.use_connect = False
-                functions.rotate_bone_local_axis_edit_mode(obj.data, bone.name, self.axis, self.degree)
-        else:
-            print("当前对象不是一个骨骼或者不在编辑模式下。")
-
-        bpy.ops.wm.redraw_timer()
-        return{'FINISHED'}
-
 class pose_model(bpy.types.Operator):
     bl_label = "Pose Model"
     bl_idname = "cd_ue4_functions.pose_model"
@@ -594,141 +318,38 @@ class OBJECT_OT_add_vertex_groups_from_bones(bpy.types.Operator):
         self.report({'INFO'}, f"添加 {len(selected_bones)} 个顶点组")
         return {'FINISHED'}
 
-class ShapeKeyGroupProperty(bpy.types.PropertyGroup):
-    obj: bpy.props.PointerProperty(type=bpy.types.Object) # type: ignore
-
-class BATCH_SHAPE_KEY_ObjectList(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        row = layout.row(align=True)
-        row.label(text=item.obj.name, icon='OBJECT_DATA')
-
-class BatchShapeKeyPanel(bpy.types.Panel):
-    bl_label = "Batch Shape Key Controller"
-    bl_idname = "VIEW3D_PT_batch_shapekey"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = 'To UE4'
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column(align=True)
-        grid = col.grid_flow(row_major=True)
-
-        box = layout.box()
-        row = box.row()
-        row.operator("batchshape.add_object", text="添加选中物体")
-        row.operator("batchshape.clear_objects", text="清空")
-
-        row = box.row()
-        row.operator("batchshape.remove_object", text="移除选定物体")
-        row.operator("batchshape.refresh_keys", text="刷新形态键")
-
-        _label_multiline(context=context,
-                         text="Selected Objects",
-                         parent=col)
-        
-        scene = context.scene
-
-        col.template_list("BATCH_SHAPE_KEY_ObjectList", 
-                          "batch_shape_key_objects", 
-                          scene, "batchshape_objects", 
-                          scene, "batchshape_index")
-        
-        box = layout.box()
-        common_keys = functions.get_common_shapekeys(scene.batchshape_objects)
-        for key_name in common_keys:
-            box.prop(scene, f"sk_val_{key_name}", text=key_name)
-
-
-class AddObjectOperator(bpy.types.Operator):
-    bl_idname = "batchshape.add_object"
-    bl_label = "添加选中物体"
-
-    def execute(self, context):
-        for obj in context.selected_objects:
-            if not any(item.obj == obj for item in context.scene.batchshape_objects):
-                item = context.scene.batchshape_objects.add()
-                item.obj = obj
-        functions.update_common_key_values(context)
-        return {'FINISHED'}
-
-class RemoveObejctOperator(bpy.types.Operator):
-    bl_idname = "batchshape.remove_object"
-    bl_label = "移除选定物体"
-
-    def execute(self, context):
-        context.scene.batchshape_objects.remove(context.scene.batchshape_index)
-        return {'FINISHED'}
-
-class ClearObjectsOperator(bpy.types.Operator):
-    bl_idname = "batchshape.clear_objects"
-    bl_label = "清空物体"
-
-    def execute(self, context):
-        context.scene.batchshape_objects.clear()
-        functions.cleanup_key_properties(context)
-        return {'FINISHED'}
-    
-class RefreshObjectsKeys(bpy.types.Operator):
-    bl_idname = "batchshape.refresh_keys"
-    bl_label = "刷新形态键"
-
-    def execute(self, context):
-        functions.update_common_key_values(context)
-        return {'FINISHED'}
-
 classList = {
     execute_functions,
-    bone_rotate_execute,
     pose_model,
-    main_panel,
-    bone_edit_panel,
+    VIEW3D_PT_main_panel,
     bone_pose_panel,
-    bone_name_mapping_panel,
-    bone_name_mapping,
-    RENAME_MAPPING_OT_AddItem,
-    RENAME_MAPPING_OT_RemoveItem,
-    RENAME_MAPPING_UL_items,
-    load_from_default,
-    RENAME_MAPPING_OT_ImportFromFile,
-    RENAME_BY_MAPPING,
-    ALIGN_BONES,
     AddCustomArmature,
     OBJECT_OT_add_vertex_groups_from_bones,
     useful_tools_panel,
+}
 
-    ShapeKeyGroupProperty,
-    BatchShapeKeyPanel,
-    AddObjectOperator,
-    RemoveObejctOperator,
-    ClearObjectsOperator,
-    RefreshObjectsKeys,
-    BATCH_SHAPE_KEY_ObjectList,
+fileList = {
+    bone_rotation_panel,
+    bones_rename_mapping_panel,
+    batch_shape_key_panel,
+    vertex_group_sorting_panel
 }
 
 def register():
     for classSingle in classList :
         bpy.utils.register_class(classSingle)
-
-    bpy.types.Scene.mapping_items = bpy.props.CollectionProperty(type=bone_name_mapping)
-    bpy.types.Scene.mapping_index = bpy.props.IntProperty(default=0)
     bpy.types.VIEW3D_MT_armature_add.append(menu_func)
 
-    # Batch shape keys
-    bpy.types.Scene.batchshape_objects = bpy.props.CollectionProperty(type=ShapeKeyGroupProperty)
-    bpy.types.Scene.batchshape_index = bpy.props.IntProperty(name="Index for Shape Key Object List", default=0)
+    for fileSingle in fileList:
+        fileSingle.register()
 
 def unregister():
     for classSingle in classList :
         bpy.utils.unregister_class(classSingle)
-
-    del bpy.types.Scene.mapping_items
-    del bpy.types.Scene.mapping_index
     bpy.types.VIEW3D_MT_armature_add.remove(menu_func)
 
-    # Batch shape keys
-    del bpy.types.Scene.batchshape_objects
-    del bpy.types.Scene.batchshape_index
+    for fileSingle in fileList:
+        fileSingle.unregister()
 
 if __name__ == "__main__":
     register()
