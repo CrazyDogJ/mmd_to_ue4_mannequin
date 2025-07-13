@@ -19,17 +19,17 @@ def get_common_shapekeys(object_list):
 def update_common_key_values(context):
     scene = context.scene
     cleanup_key_properties(context)
-    common_keys = get_common_shapekeys(scene.batchshape_objects)
+    common_keys = get_common_shapekeys(scene.cdtools_batchshape_objects)
 
-    scene.batchshape_keys.clear()
+    scene.cdtools_batchshape_shapekeys.clear()
     for key_name in common_keys:
-        new_shape_key = scene.batchshape_keys.add()
+        new_shape_key = scene.cdtools_batchshape_shapekeys.add()
         new_shape_key.key = key_name
         prop_id = f"sk_val_{key_name}"
         if not hasattr(scene, prop_id):
             def make_update(kname):
                 def updater(self, context):
-                    for item in context.scene.batchshape_objects:
+                    for item in context.scene.cdtools_batchshape_objects:
                         obj = item.obj
                         if obj and obj.data.shape_keys and kname in obj.data.shape_keys.key_blocks:
                             obj.data.shape_keys.key_blocks[kname].value = getattr(context.scene, f"sk_val_{kname}")
@@ -49,17 +49,17 @@ def cleanup_key_properties(context):
             delattr(scene, k)
 
 # Shape key group section
-class ShapeKeyGroupProperty(bpy.types.PropertyGroup):
+class CDTOOLS_ShapeKeyObjectGroupProperty(bpy.types.PropertyGroup):
     obj: bpy.props.PointerProperty(type=bpy.types.Object) # type: ignore
 
-class ShapeKeyKeysGroupProperty(bpy.types.PropertyGroup):
+class CDTOOLS_ShapeKeyNameGroupProperty(bpy.types.PropertyGroup):
     key: bpy.props.StringProperty() # type: ignore
 
-class BATCH_SHAPE_KEY_UL_ObjectList(bpy.types.UIList):
+class CDTOOLS_UL_ShapeKeyObjectList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         row = layout.row(align=True)
         row.label(text=item.obj.name, icon='OBJECT_DATA')
-        op = row.operator("batchshape.remove_object", icon="PANEL_CLOSE", text="")
+        op = row.operator("cdtools.batchshape_remove_object", icon="PANEL_CLOSE", text="")
         op.obj_index = index
 
     def filter_items(self, context, data, propname):
@@ -75,7 +75,7 @@ class BATCH_SHAPE_KEY_UL_ObjectList(bpy.types.UIList):
 
         return flt_flags, flt_neworder
 
-class BATCH_SHAPE_KEY_UL_KeyList(bpy.types.UIList):
+class CDTOOLS_UL_ShapeKeyList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         row = layout.row()
         row.label(icon="SHAPEKEY_DATA")
@@ -97,9 +97,9 @@ class BATCH_SHAPE_KEY_UL_KeyList(bpy.types.UIList):
 
         return flt_flags, flt_neworder
 
-class BatchShapeKeyPanel(bpy.types.Panel):
+class CDTOOLS_PT_BatchShapeKeyPanel(bpy.types.Panel):
     bl_label = "Batch Shape Key Controller"
-    bl_idname = "VIEW3D_PT_batch_shapekey"
+    bl_idname = "VIEW3D_PT_batch_shapekey_panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Cd Tools"
@@ -113,29 +113,29 @@ class BatchShapeKeyPanel(bpy.types.Panel):
         box = col.box()
         box.label(text="Selected Objects", icon="OBJECT_DATA")
         
-        col.template_list("BATCH_SHAPE_KEY_UL_ObjectList", 
+        col.template_list("CDTOOLS_UL_ShapeKeyObjectList", 
                           "batch_shape_key_objects", 
-                          scene, "batchshape_objects", 
-                          scene, "batchshape_index")
+                          scene, "cdtools_batchshape_objects", 
+                          scene, "cdtools_batchshape_object_index")
         
         box = col.box()
         row = box.row()
-        row.operator("batchshape.add_object", text="Add Selected Objects", icon="ADD")
-        row.operator("batchshape.clear_objects", text="Clear", icon="X")
+        row.operator("cdtools.batchshape_add_object", text="Add Selected Objects", icon="ADD")
+        row.operator("cdtools.batchshape_clear_objects", text="Clear", icon="X")
 
         col.separator()
 
         box = col.box()
         box.label(text="Shape Keys in Selected Objects", icon="SHAPEKEY_DATA")
         
-        col.template_list("BATCH_SHAPE_KEY_UL_KeyList",
+        col.template_list("CDTOOLS_UL_ShapeKeyList",
                           "batch_shape_key_keys",
-                          scene, "batchshape_keys",
-                          scene, "batchshape_key_index")
+                          scene, "cdtools_batchshape_shapekeys",
+                          scene, "cdtools_batchshape_shapekey_index")
         
         box = col.box()
         row = box.row()
-        row.operator("batchshape.refresh_keys", text="Refresh Shape Keys", icon="FILE_REFRESH")
+        row.operator("cdtools.batchshape_refresh_keys", text="Refresh Shape Keys", icon="FILE_REFRESH")
 
         col.separator()
         box = col.box()
@@ -145,59 +145,59 @@ class BatchShapeKeyPanel(bpy.types.Panel):
                         text="This tool is useful when making multi-object's shape keys", 
                         parent=box)
 
-class AddObjectOperator(bpy.types.Operator):
-    bl_idname = "batchshape.add_object"
-    bl_label = "添加选中物体"
+class CDTOOLS_OT_AddObjectOperator(bpy.types.Operator):
+    bl_idname = "cdtools.batchshape_add_object"
+    bl_label = "Add selected objects"
 
     def execute(self, context):
         for obj in context.selected_objects:
-            if not any(item.obj == obj for item in context.scene.batchshape_objects):
-                item = context.scene.batchshape_objects.add()
+            if not any(item.obj == obj for item in context.scene.cdtools_batchshape_objects):
+                item = context.scene.cdtools_batchshape_objects.add()
                 item.obj = obj
 
         update_common_key_values(context)
         return {'FINISHED'}
 
-class RemoveObejctOperator(bpy.types.Operator):
-    bl_idname = "batchshape.remove_object"
+class CDTOOLS_OT_RemoveObejctOperator(bpy.types.Operator):
+    bl_idname = "cdtools.batchshape_remove_object"
     bl_label = "Remove this object"
 
     obj_index: bpy.props.IntProperty() # type: ignore
 
     def execute(self, context):
-        context.scene.batchshape_objects.remove(self.obj_index)
+        context.scene.cdtools_batchshape_objects.remove(self.obj_index)
         update_common_key_values(context)
         return {'FINISHED'}
 
-class ClearObjectsOperator(bpy.types.Operator):
-    bl_idname = "batchshape.clear_objects"
-    bl_label = "清空物体"
+class CDTOOLS_OT_ClearObjectsOperator(bpy.types.Operator):
+    bl_idname = "cdtools.batchshape_clear_objects"
+    bl_label = "Clear objects"
 
     def execute(self, context):
-        context.scene.batchshape_objects.clear()
+        context.scene.cdtools_batchshape_objects.clear()
         cleanup_key_properties(context)
         update_common_key_values(context)
         return {'FINISHED'}
     
-class RefreshObjectsKeys(bpy.types.Operator):
-    bl_idname = "batchshape.refresh_keys"
-    bl_label = "刷新形态键"
+class CDTOOLS_OT_RefreshObjectsShapeKeys(bpy.types.Operator):
+    bl_idname = "cdtools.batchshape_refresh_keys"
+    bl_label = "Refresh shape keys"
 
     def execute(self, context):
         update_common_key_values(context)
         return {'FINISHED'}
 
-def ShapeKeySelectObject(self, context): 
-    batch_shape_obj = context.scene.batchshape_objects[context.scene.batchshape_index]
+def ShapeKeySelectObjectUpdateFunction(self, context): 
+    batch_shape_obj = context.scene.cdtools_batchshape_objects[context.scene.cdtools_batchshape_object_index]
     if batch_shape_obj:
         batch_shape_obj.obj.select_set(True)
         context.view_layer.objects.active = batch_shape_obj.obj
     
-def SelectObejctShapeKeyOperator(self, context): 
-    for item in context.scene.batchshape_objects:
+def ShapeKeySelectKeyUpdateFunction(self, context): 
+    for item in context.scene.cdtools_batchshape_objects:
         if item.obj.data.shape_keys:
             key_blocks = item.obj.data.shape_keys.key_blocks
-            shape_key_name = context.scene.batchshape_keys[context.scene.batchshape_key_index].key
+            shape_key_name = context.scene.cdtools_batchshape_shapekeys[context.scene.cdtools_batchshape_shapekey_index].key
             if shape_key_name in key_blocks:
                 # 找到索引
                 index = list(key_blocks.keys()).index(shape_key_name)
@@ -205,34 +205,34 @@ def SelectObejctShapeKeyOperator(self, context):
     
 classes = (
 
-    ShapeKeyGroupProperty,
-    ShapeKeyKeysGroupProperty,
+    CDTOOLS_ShapeKeyObjectGroupProperty,
+    CDTOOLS_ShapeKeyNameGroupProperty,
 
-    BATCH_SHAPE_KEY_UL_ObjectList,
-    BATCH_SHAPE_KEY_UL_KeyList,
+    CDTOOLS_UL_ShapeKeyObjectList,
+    CDTOOLS_UL_ShapeKeyList,
 
-    BatchShapeKeyPanel,
-    AddObjectOperator,
-    RemoveObejctOperator,
-    ClearObjectsOperator,
-    RefreshObjectsKeys,
+    CDTOOLS_PT_BatchShapeKeyPanel,
+    CDTOOLS_OT_AddObjectOperator,
+    CDTOOLS_OT_RemoveObejctOperator,
+    CDTOOLS_OT_ClearObjectsOperator,
+    CDTOOLS_OT_RefreshObjectsShapeKeys,
 )
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.Scene.batchshape_objects = bpy.props.CollectionProperty(type=ShapeKeyGroupProperty)
-    bpy.types.Scene.batchshape_index = bpy.props.IntProperty(default=0, update=ShapeKeySelectObject)
+    bpy.types.Scene.cdtools_batchshape_objects = bpy.props.CollectionProperty(type=CDTOOLS_ShapeKeyObjectGroupProperty)
+    bpy.types.Scene.cdtools_batchshape_object_index = bpy.props.IntProperty(default=0, update=ShapeKeySelectObjectUpdateFunction)
 
-    bpy.types.Scene.batchshape_keys = bpy.props.CollectionProperty(type=ShapeKeyKeysGroupProperty)
-    bpy.types.Scene.batchshape_key_index = bpy.props.IntProperty(default=0, update=SelectObejctShapeKeyOperator)
+    bpy.types.Scene.cdtools_batchshape_shapekeys = bpy.props.CollectionProperty(type=CDTOOLS_ShapeKeyNameGroupProperty)
+    bpy.types.Scene.cdtools_batchshape_shapekey_index = bpy.props.IntProperty(default=0, update=ShapeKeySelectKeyUpdateFunction)
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
-    del bpy.types.Scene.batchshape_objects
-    del bpy.types.Scene.batchshape_index
+    del bpy.types.Scene.cdtools_batchshape_objects
+    del bpy.types.Scene.cdtools_batchshape_object_index
 
-    del bpy.types.Scene.batchshape_keys
-    del bpy.types.Scene.batchshape_key_index
+    del bpy.types.Scene.cdtools_batchshape_shapekeys
+    del bpy.types.Scene.cdtools_batchshape_shapekey_index

@@ -2,6 +2,8 @@ import bpy
 from .. import shared_functions
 from .. import lists
 from . import functions
+from ..tools import bones_mapping_panel
+from ..tools import bone_rotation_panel
 
 class VIEW3D_PT_main_panel(bpy.types.Panel):
     bl_label = "To UE4 Execute"
@@ -76,7 +78,7 @@ class execute_functions(bpy.types.Operator):
                 armature.name = "root"
 
                 # Execute rename
-                functions.rename_bones(armature, lists.namelist)
+                bones_mapping_panel.rename_bones(armature, lists.namelist, bone1_to_bone2=True)
                 # Remove empty weight vertex groups
                 functions.delete_empty_vertex_groups(selected_obj.parent, selected_obj, lists.bones_ignore)
 
@@ -89,7 +91,7 @@ class execute_functions(bpy.types.Operator):
 
                 # Rotate spine bones
                 for name, axis, degree in list.spine_rot_list:
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, axis, degree)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, axis, degree)
 
                 # Execute arm reverse
                 mul = 1
@@ -99,74 +101,74 @@ class execute_functions(bpy.types.Operator):
                     mul_2 = 0
 
                 for name in lists.bones_arm_l:
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'Z', -90 * mul)
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'Y', 180 * mul_2)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'Z', -90 * mul)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'Y', 180 * mul_2)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "hand_l", 'Z', 90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "hand_l", 'X', 90 * mul)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "hand_l", 'Z', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "hand_l", 'X', 90 * mul)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_01_l", 'Z', 90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_01_l", 'X', 180 * mul_2)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_01_l", 'Z', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_01_l", 'X', 180 * mul_2)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_02_l", 'Z', 90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_02_l", 'X', 180 * mul_2)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_02_l", 'Z', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_02_l", 'X', 180 * mul_2)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_03_l", 'Z', 90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_03_l", 'X', 180 * mul_2)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_03_l", 'Z', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_03_l", 'X', 180 * mul_2)
 
                 for name in lists.namelist_finger_l:
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'Z', 90)
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'X', 90 * mul)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'Z', 90)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'X', 90 * mul)
 
                 for name in lists.bones_arm_r:
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'Z', 90 * mul)
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'Y', 180 * mul_2)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'Z', 90 * mul)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'Y', 180 * mul_2)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "hand_r", 'Z', -90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "hand_r", 'X', 90 * mul)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "hand_r", 'Z', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "hand_r", 'X', 90 * mul)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_01_r", 'Z', -90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_01_r", 'X', 180 * mul_2)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_01_r", 'Z', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_01_r", 'X', 180 * mul_2)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_02_r", 'Z', -90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_02_r", 'X', 180 * mul_2)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_02_r", 'Z', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_02_r", 'X', 180 * mul_2)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_03_r", 'Z', -90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thumb_03_r", 'X', 180 * mul_2)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_03_r", 'Z', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thumb_03_r", 'X', 180 * mul_2)
 
                 for name in lists.namelist_finger_r:
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'Z', -90)
-                    functions.rotate_bone_local_axis_edit_mode(armature, name, 'X', 90 * mul)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'Z', -90)
+                    bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, 'X', 90 * mul)
 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thigh_l", 'X', 90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thigh_l", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thigh_l", 'X', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thigh_l", 'Y', -90)
     
-                functions.rotate_bone_local_axis_edit_mode(armature, "calf_l", 'X', 90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "calf_l", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "calf_l", 'X', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "calf_l", 'Y', -90)
                 
-                functions.rotate_bone_local_axis_edit_mode(armature, "thigh_r", 'X', -90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "thigh_r", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thigh_r", 'X', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "thigh_r", 'Y', -90)
                 
-                functions.rotate_bone_local_axis_edit_mode(armature, "calf_r", 'X', -90)
-                functions.rotate_bone_local_axis_edit_mode(armature, "calf_r", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "calf_r", 'X', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "calf_r", 'Y', -90)
                 
                 functions.set_bone_direction(armature, "foot_l", (0,1,0))
-                functions.rotate_bone_local_axis_edit_mode(armature, "foot_l", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "foot_l", 'Y', -90)
                 
                 functions.set_bone_direction(armature, "foot_r", (0,-1,0))
-                functions.rotate_bone_local_axis_edit_mode(armature, "foot_r", 'Y', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "foot_r", 'Y', 90)
                 
                 functions.set_bone_direction(armature, "ik_foot_l", (0,1,0))
-                functions.rotate_bone_local_axis_edit_mode(armature, "ik_foot_l", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "ik_foot_l", 'Y', -90)
                 
                 functions.set_bone_direction(armature, "ik_foot_r", (0,-1,0))
-                functions.rotate_bone_local_axis_edit_mode(armature, "ik_foot_r", 'Y', 90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "ik_foot_r", 'Y', 90)
                 
                 functions.set_bone_direction(armature, "ball_l", (0,0,1))
-                functions.rotate_bone_local_axis_edit_mode(armature, "ball_l", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "ball_l", 'Y', -90)
                 
                 functions.set_bone_direction(armature, "ball_r", (0,0,-1))
-                functions.rotate_bone_local_axis_edit_mode(armature, "ball_r", 'Y', -90)
+                bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, "ball_r", 'Y', -90)
 
                 # Add new ik bones
                 functions.add_new_bone(armature, "ik_foot_root", (0,0,0), (0,1,0))
@@ -180,7 +182,7 @@ class execute_functions(bpy.types.Operator):
                 armature.edit_bones["ik_hand_r"].roll = armature.edit_bones["hand_r"].roll
 
                 for child_name , parent_name in lists.reparent_list:
-                    functions.bind_bone_to_parent(armature, child_name, parent_name)
+                    bones_mapping_panel.bind_bone_to_parent(armature, child_name, parent_name)
                 
         return{'FINISHED'}
 

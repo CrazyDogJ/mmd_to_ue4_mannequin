@@ -1,9 +1,9 @@
 import bpy
 from .. import shared_functions
 
-class useful_tools_panel(bpy.types.Panel):
+class CDTOOLS_PT_UsefulToolsPanel(bpy.types.Panel):
     bl_label = "Useful tools"
-    bl_idname = "CD_PT_useful_tools"
+    bl_idname = "VIEW3D_PT_useful_tools"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Cd Tools"
@@ -11,7 +11,7 @@ class useful_tools_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
-        col.operator('object.add_vertex_groups_from_bones', text='Add Vertex Groups By Bones', icon="POSE_HLT")
+        col.operator('cdtools.add_vertex_groups_from_bones', text='Add Vertex Groups By Bones', icon="POSE_HLT")
         box = col.box()
         box.label(text="Description", icon="QUESTION")
         shared_functions.label_multiline(context=context,
@@ -19,22 +19,23 @@ class useful_tools_panel(bpy.types.Panel):
                          parent=box)
         
         col.separator()
-        col.operator("rename_mapping.align_bones", icon="FILE_REFRESH", text="Align Bones Between Skeleton")
+        col.operator("cdtools.align_bones", icon="FILE_REFRESH", text="Align Bones Between Skeleton")
         box = col.box()
         box.label(text="Description", icon="QUESTION")
         shared_functions.label_multiline(context, text="mmd_skel is active, ref_skel is other selcted", parent=box)
 
-class OBJECT_OT_add_vertex_groups_from_bones(bpy.types.Operator):
+class CDTOOLS_OT_AddVertexGroupsFromBones(bpy.types.Operator):
     """从选中的骨骼向目标网格添加对应的顶点组"""
-    bl_idname = "object.add_vertex_groups_from_bones"
+    bl_idname = "cdtools.add_vertex_groups_from_bones"
     bl_label = "Add Vertex Groups from Bones"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        armature = context.object
-        if armature.type != 'ARMATURE':
-            self.report({'WARNING'}, "请选中一个骨骼对象")
-            return {'CANCELLED'}
+        if context.object:
+            armature = context.object
+            if armature.type != 'ARMATURE':
+                self.report({'WARNING'}, "请选中一个骨骼对象")
+                return {'CANCELLED'}
 
         # 获取选中的骨骼名字
         selected_bones = [bone.name for bone in context.selected_pose_bones]
@@ -62,9 +63,9 @@ class OBJECT_OT_add_vertex_groups_from_bones(bpy.types.Operator):
         self.report({'INFO'}, f"添加 {len(selected_bones)} 个顶点组")
         return {'FINISHED'}
 
-class ALIGN_BONES(bpy.types.Operator):
+class CDTOOLS_OT_AlignBonesOperator(bpy.types.Operator):
     bl_label = "Align bones"
-    bl_idname = "rename_mapping.align_bones"
+    bl_idname = "cdtools.align_bones"
 
     def execute(self, context):
         selected_objects = bpy.context.selected_objects
@@ -100,9 +101,9 @@ class ALIGN_BONES(bpy.types.Operator):
         return {'FINISHED'}
 
 classes = {
-    useful_tools_panel,
-    OBJECT_OT_add_vertex_groups_from_bones,
-    ALIGN_BONES,
+    CDTOOLS_PT_UsefulToolsPanel,
+    CDTOOLS_OT_AddVertexGroupsFromBones,
+    CDTOOLS_OT_AlignBonesOperator,
 }
 
 def register():

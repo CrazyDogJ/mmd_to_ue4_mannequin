@@ -11,12 +11,12 @@ def import_list_from_txt(filepath):
         return [line.strip() for line in f if line.strip()]  # 去除换行和空行
 
 # 每项的数据结构
-class Item(bpy.types.PropertyGroup):
+class CDTOOLS_VertexGroupGroupProperty(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name") # type: ignore
     selected: bpy.props.BoolProperty(name="selected", default=False) # type: ignore
 
 # 列表UI
-class VIEW3D_UL_ItemList(bpy.types.UIList):
+class CDTOOLS_UL_VertexGroupItemList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             layout.prop(item, "selected", text="")
@@ -28,9 +28,9 @@ class VIEW3D_UL_ItemList(bpy.types.UIList):
             layout.label(text="", icon_value=icon)
 
 # 面板
-class VIEW3D_PT_DragSortListPanel(bpy.types.Panel):
-    bl_label = "Drag Sort List"
-    bl_idname = "VIEW3D_PT_DragSortListPanel"
+class CDTOOLS_PT_VertexGroupListPanel(bpy.types.Panel):
+    bl_label = "Vertex Groups Sort List"
+    bl_idname = "VIEW3D_PT_VertexGroupListPanel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Cd Tools"
@@ -45,25 +45,25 @@ class VIEW3D_PT_DragSortListPanel(bpy.types.Panel):
         box = main_col.box()
         row = box.row(align=True)
         col = row.column(align=True)
-        col.operator("vertex_group_list.clear_selected", icon="X", text="")
-        row.template_list("VIEW3D_UL_ItemList", "", scn, "vertex_groups_selected", scn, "vertex_groups_selected_index")
+        col.operator("cdtool_vertex_group_list.clear_selected", icon="X", text="")
+        row.template_list("CDTOOLS_UL_VertexGroupItemList", "", scn, "cdtools_vertex_groups_selected", scn, "cdtools_vertex_groups_selected_index")
 
         col = row.column(align=True)
-        col.operator("vertex_group_list.copy_groups", icon='FILE_REFRESH', text="").refresh_or_not = True
-        col.operator("vertex_group_list.copy_groups", icon='X', text="").refresh_or_not = False
+        col.operator("cdtools_vertex_group_list.copy_groups", icon='FILE_REFRESH', text="").refresh_or_not = True
+        col.operator("cdtools_vertex_group_list.copy_groups", icon='X', text="").refresh_or_not = False
         col.separator()
-        col.operator("vertex_group_list.move_item", icon='TRIA_UP', text="").direction = 'UP'
-        col.operator("vertex_group_list.move_item", icon='TRIA_DOWN', text="").direction = 'DOWN'
+        col.operator("cdtools_vertex_group_list.move_item", icon='TRIA_UP', text="").direction = 'UP'
+        col.operator("cdtools_vertex_group_list.move_item", icon='TRIA_DOWN', text="").direction = 'DOWN'
         col.separator()
-        col.operator("vertex_group_list.apply_vertex_groups_order", icon="CHECKMARK", text="")
+        col.operator("cdtools_vertex_group_list.apply_vertex_groups_order", icon="CHECKMARK", text="")
 
         main_col.separator()
         box = main_col.box()
         box.label(text="External Editing", icon="FILE")
         box = main_col.box()
         row = box.row()
-        row.operator("vertex_group_list.export", text="Export to txt", icon="EXPORT")
-        row.operator("vertex_group_list.import", text="Import from txt", icon="IMPORT")
+        row.operator("cdtools_vertex_group_list.export", text="Export to txt", icon="EXPORT")
+        row.operator("cdtools_vertex_group_list.import", text="Import from txt", icon="IMPORT")
 
         main_col.separator()
         box = main_col.box()
@@ -74,31 +74,31 @@ class VIEW3D_PT_DragSortListPanel(bpy.types.Panel):
                         parent=box)
 
 # 操作符：录入顶点组
-class VERTEXGROUPLIST_OT_CopyGroups(bpy.types.Operator):
-    bl_idname = "vertex_group_list.copy_groups"
+class CDTOOLS_VGLIST_OT_CopyGroups(bpy.types.Operator):
+    bl_idname = "cdtools_vertex_group_list.copy_groups"
     bl_label = "Copy Or Clear Vertex Groups"
     refresh_or_not: bpy.props.BoolProperty() # type: ignore
 
     def execute(self, context):
         if self.refresh_or_not:
-            context.scene.vertex_groups_selected.clear()
+            context.scene.cdtools_vertex_groups_selected.clear()
             for item in context.active_object.vertex_groups:
-                new_item = context.scene.vertex_groups_selected.add()
+                new_item = context.scene.cdtools_vertex_groups_selected.add()
                 new_item.name = item.name
                 new_item.selected = False
         else:
-            context.scene.vertex_groups_selected.clear()
+            context.scene.cdtools_vertex_groups_selected.clear()
         return {'FINISHED'}
 
 # 操作符：上下移动
-class VERTEXGROUPLIST_OT_MoveItem(bpy.types.Operator):
-    bl_idname = "vertex_group_list.move_item"
+class CDTOOLS_VGLIST_OT_MoveItem(bpy.types.Operator):
+    bl_idname = "cdtools_vertex_group_list.move_item"
     bl_label = "Move Item"
     direction: bpy.props.StringProperty() # type: ignore
 
     def execute(self, context):
         scn = context.scene
-        items = scn.vertex_groups_selected
+        items = scn.cdtools_vertex_groups_selected
         total = len(items)
 
         if self.direction == 'UP':
@@ -113,8 +113,8 @@ class VERTEXGROUPLIST_OT_MoveItem(bpy.types.Operator):
         return {'FINISHED'}
 
 # 操作符：应用顶点组顺序
-class VERTEXGROUPLIST_OT_ApplyToSelectedObject(bpy.types.Operator):
-    bl_idname = "vertex_group_list.apply_vertex_groups_order"
+class CDTOOLS_VGLIST_OT_ApplyToSelectedObject(bpy.types.Operator):
+    bl_idname = "cdtools_vertex_group_list.apply_vertex_groups_order"
     bl_label = "Apply"
 
     def execute(self, context):
@@ -136,7 +136,7 @@ class VERTEXGROUPLIST_OT_ApplyToSelectedObject(bpy.types.Operator):
             obj.vertex_groups.remove(obj.vertex_groups[0])
 
         # 按照列表新顺序添加
-        for item in scn.vertex_groups_selected:
+        for item in scn.cdtools_vertex_groups_selected:
             new_vg = obj.vertex_groups.new(name=item.name)
             weights = vg_data.get(item.name, {})
             for v_idx, w in weights.items():
@@ -145,19 +145,19 @@ class VERTEXGROUPLIST_OT_ApplyToSelectedObject(bpy.types.Operator):
         return {'FINISHED'}
 
 # 操作符：Clear selected
-class VERTEXGROUPLIST_OT_ClearSelected(bpy.types.Operator):
-    bl_idname = "vertex_group_list.clear_selected"
+class CDTOOLS_VGLIST_OT_ClearSelected(bpy.types.Operator):
+    bl_idname = "cdtools_vertex_group_list.clear_selected"
     bl_label = "Clear Selected"
 
     def execute(self, context):
         scn = context.scene
-        for item in scn.vertex_groups_selected:
+        for item in scn.cdtools_vertex_groups_selected:
             item.selected = False
         return {'FINISHED'}
 
 # Op : Export or Import file
-class VERTEXGROUPLIST_OT_ExportFile(bpy.types.Operator):
-    bl_idname = "vertex_group_list.export"
+class CDTOOLS_VGLIST_OT_ExportFile(bpy.types.Operator):
+    bl_idname = "cdtools_vertex_group_list.export"
     bl_label = "Export list to txt file"
 
     filepath: bpy.props.StringProperty(
@@ -174,7 +174,7 @@ class VERTEXGROUPLIST_OT_ExportFile(bpy.types.Operator):
 
     def execute(self, context):
         export_set = []
-        for item in context.scene.vertex_groups_selected:
+        for item in context.scene.cdtools_vertex_groups_selected:
             export_set.append(item.name)
         export_list_to_txt(self.filepath, export_set)
         return {'FINISHED'}
@@ -186,8 +186,8 @@ class VERTEXGROUPLIST_OT_ExportFile(bpy.types.Operator):
         return {'RUNNING_MODAL'}
     
 # Op : Import file to vertex groups order
-class VERTEXGROUPLIST_OT_ImportFile(bpy.types.Operator):
-    bl_idname = "vertex_group_list.import"
+class CDTOOLS_VGLIST_OT_ImportFile(bpy.types.Operator):
+    bl_idname = "cdtools_vertex_group_list.import"
     bl_label = "Import txt file to list"
 
     filepath: bpy.props.StringProperty(
@@ -204,9 +204,9 @@ class VERTEXGROUPLIST_OT_ImportFile(bpy.types.Operator):
 
     def execute(self, context):
         imported_set = import_list_from_txt(self.filepath)
-        context.scene.vertex_groups_selected.clear()
+        context.scene.cdtools_vertex_groups_selected.clear()
         for item in imported_set:
-            new_item = context.scene.vertex_groups_selected.add()
+            new_item = context.scene.cdtools_vertex_groups_selected.add()
             new_item.name = item
             new_item.selected = False
         return {'FINISHED'}
@@ -218,8 +218,8 @@ class VERTEXGROUPLIST_OT_ImportFile(bpy.types.Operator):
         return {'RUNNING_MODAL'}
     
 # Op : Update selected object active vertex group
-def SelectVertexGroup(self, context):
-    target_name = context.scene.vertex_groups_selected[context.scene.vertex_groups_selected_index].name
+def SelectVertexGroupUpdateFunction(self, context):
+    target_name = context.scene.cdtools_vertex_groups_selected[context.scene.cdtools_vertex_groups_selected_index].name
     if context.active_object:
         obj = context.active_object
         for i, vg in enumerate(obj.vertex_groups):
@@ -229,27 +229,27 @@ def SelectVertexGroup(self, context):
 
 # 注册类
 classes = (
-    Item,
-    VIEW3D_UL_ItemList,
-    VIEW3D_PT_DragSortListPanel,
-    VERTEXGROUPLIST_OT_CopyGroups,
-    VERTEXGROUPLIST_OT_MoveItem,
-    VERTEXGROUPLIST_OT_ApplyToSelectedObject,
-    VERTEXGROUPLIST_OT_ClearSelected,
-    VERTEXGROUPLIST_OT_ExportFile,
-    VERTEXGROUPLIST_OT_ImportFile
+    CDTOOLS_VertexGroupGroupProperty,
+    CDTOOLS_UL_VertexGroupItemList,
+    CDTOOLS_PT_VertexGroupListPanel,
+    CDTOOLS_VGLIST_OT_CopyGroups,
+    CDTOOLS_VGLIST_OT_MoveItem,
+    CDTOOLS_VGLIST_OT_ApplyToSelectedObject,
+    CDTOOLS_VGLIST_OT_ClearSelected,
+    CDTOOLS_VGLIST_OT_ExportFile,
+    CDTOOLS_VGLIST_OT_ImportFile
 )
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.Scene.vertex_groups_selected = bpy.props.CollectionProperty(type=Item)
-    bpy.types.Scene.vertex_groups_selected_index = bpy.props.IntProperty(update=SelectVertexGroup)
+    bpy.types.Scene.cdtools_vertex_groups_selected = bpy.props.CollectionProperty(type=CDTOOLS_VertexGroupGroupProperty)
+    bpy.types.Scene.cdtools_vertex_groups_selected_index = bpy.props.IntProperty(update=SelectVertexGroupUpdateFunction)
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
-    del bpy.types.Scene.vertex_groups_selected
-    del bpy.types.Scene.vertex_groups_selected_index
+    del bpy.types.Scene.cdtools_vertex_groups_selected
+    del bpy.types.Scene.cdtools_vertex_groups_selected_index

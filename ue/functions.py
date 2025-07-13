@@ -3,30 +3,6 @@ import math
 import mathutils
 
 # Functions
-def bind_bone_to_parent(armature_data, child_bone_name, parent_bone_name):
-    # 查找子级骨骼和父级骨骼
-    child_bone = armature_data.edit_bones.get(child_bone_name)
-    parent_bone = armature_data.edit_bones.get(parent_bone_name)
-    
-    if child_bone:
-        if parent_bone_name == "root":
-            child_bone.parent = None
-        elif parent_bone:
-            # 设置子级骨骼的父级骨骼
-            child_bone.parent = parent_bone
-    else:
-        print("未找到指定名称的骨骼")
-
-def rename_bones(armature_data, name_list):
-    for name, newname in name_list:
-        idx = armature_data.edit_bones.find(name)
-        if idx != -1:
-            bo = armature_data.edit_bones[idx]
-            bo.name = newname
-        else: #Not found
-            #Do something
-            pass
-
 def rename_vertex_groups(mesh_obj, name_list):
     vertex_groups = mesh_obj.vertex_groups
     for name, newname in name_list:
@@ -44,36 +20,6 @@ def add_new_bone(armature_data, name, new_bone_head, new_bone_tail):
     new_bone.tail = new_bone_tail
 
     bpy.context.view_layer.update()
-
-def rotate_bone_local_axis_edit_mode(armature_data, bone_name, axis, angle_degrees):
-    # 获取骨骼编辑数据
-    edit_bones = armature_data.edit_bones
-    bone = edit_bones.get(bone_name)
-    if bone is not None:
-        # 将角度转换为弧度
-        angle_radians = math.radians(angle_degrees)
-        # 打印骨骼的变换矩阵
-        print("骨骼 %s 的变换矩阵：" % bone_name)
-        for row in bone.matrix:
-            print(row)
-        else:
-            print("找不到指定的骨骼：%s" % bone_name)
-        # 根据指定的轴进行旋转
-        if axis == 'X':
-            rotation_matrix = mathutils.Matrix.Rotation(angle_radians, 4, 'X')
-        elif axis == 'Y':
-            rotation_matrix = mathutils.Matrix.Rotation(angle_radians, 4, 'Y')
-        elif axis == 'Z':
-            rotation_matrix = mathutils.Matrix.Rotation(angle_radians, 4, 'Z')
-
-        # Apply the rotation to the bone's matrix
-        bone.matrix = bone.matrix @ rotation_matrix
-        # 打印骨骼的变换矩阵
-        print("骨骼 %s 的变换矩阵：" % bone_name)
-        for row in rotation_matrix:
-            print(row)
-        else:
-            print("找不到指定的骨骼：%s" % bone_name)
 
 def rotate_bone_local_axis_pose_mode(armature_obj, bone_name, axis, angle_degrees):
     # 获取骨骼编辑数据

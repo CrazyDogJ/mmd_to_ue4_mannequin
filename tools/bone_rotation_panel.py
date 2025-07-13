@@ -33,9 +33,9 @@ def rotate_bone_local_axis_edit_mode(armature_data, bone_name, axis, angle_degre
         else:
             print("找不到指定的骨骼：%s" % bone_name)
 
-class bone_edit_panel(bpy.types.Panel):
+class CDTOOLS_PT_bone_rotation_panel(bpy.types.Panel):
     bl_label = "Edit Bones"
-    bl_idname = "CD_PT_edit_bones"
+    bl_idname = "VIEW3D_PT_bone_rotation_panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Cd Tools"
@@ -53,20 +53,20 @@ class bone_edit_panel(bpy.types.Panel):
         row = box.row(align=True)
         row.label(icon="EVENT_X")
         row.separator()
-        operator2 = row.operator('cd_ue4_functions.rotate', text='Rotate -90', icon="LOOP_BACK")
-        operator1 = row.operator('cd_ue4_functions.rotate', text='Rotate 90', icon="LOOP_FORWARDS")
+        operator2 = row.operator('cdtools.bone_rotate_operator', text='Rotate -90', icon="LOOP_BACK")
+        operator1 = row.operator('cdtools.bone_rotate_operator', text='Rotate 90', icon="LOOP_FORWARDS")
         
         row = box.row(align=True)
         row.label(icon="EVENT_Y")
         row.separator()
-        operator4 = row.operator('cd_ue4_functions.rotate', text='Rotate -90', icon="LOOP_BACK")
-        operator3 = row.operator('cd_ue4_functions.rotate', text='Rotate 90', icon="LOOP_FORWARDS")
+        operator4 = row.operator('cdtools.bone_rotate_operator', text='Rotate -90', icon="LOOP_BACK")
+        operator3 = row.operator('cdtools.bone_rotate_operator', text='Rotate 90', icon="LOOP_FORWARDS")
         
         row = box.row(align=True)
         row.label(icon="EVENT_Z")
         row.separator()
-        operator6 = row.operator('cd_ue4_functions.rotate', text='Rotate -90', icon="LOOP_BACK")
-        operator5 = row.operator('cd_ue4_functions.rotate', text='Rotate 90', icon="LOOP_FORWARDS")
+        operator6 = row.operator('cdtools.bone_rotate_operator', text='Rotate -90', icon="LOOP_BACK")
+        operator5 = row.operator('cdtools.bone_rotate_operator', text='Rotate 90', icon="LOOP_FORWARDS")
 
         operator1.axis = "X"
         operator1.degree = 90
@@ -94,9 +94,9 @@ class bone_edit_panel(bpy.types.Panel):
                         text="This tool is useful for editing bone's facing, TIPS: You should look towards the positive direction of a axis", 
                         parent=box)
 
-class bone_rotate_execute(bpy.types.Operator):
+class CDTOOLS_OT_bone_rotate_operator(bpy.types.Operator):
     bl_label = "Rotate Bones"
-    bl_idname = "cd_ue4_functions.rotate"
+    bl_idname = "cdtools.bone_rotate_operator"
 
     axis: bpy.props.StringProperty() # type: ignore
     degree: bpy.props.FloatProperty() # type: ignore
@@ -122,8 +122,8 @@ class bone_rotate_execute(bpy.types.Operator):
         return{'FINISHED'}
     
 classes = (
-    bone_edit_panel,
-    bone_rotate_execute,
+    CDTOOLS_PT_bone_rotation_panel,
+    CDTOOLS_OT_bone_rotate_operator,
 )
 
 def register():
