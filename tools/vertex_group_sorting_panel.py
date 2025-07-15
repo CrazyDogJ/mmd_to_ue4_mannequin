@@ -45,7 +45,7 @@ class CDTOOLS_PT_VertexGroupListPanel(bpy.types.Panel):
         box = main_col.box()
         row = box.row(align=True)
         col = row.column(align=True)
-        col.operator("cdtool_vertex_group_list.clear_selected", icon="X", text="")
+        row.operator("cdtools_vertex_group_list.clear_selected", icon="X", text="")
         row.template_list("CDTOOLS_UL_VertexGroupItemList", "", scn, "cdtools_vertex_groups_selected", scn, "cdtools_vertex_groups_selected_index")
 
         col = row.column(align=True)

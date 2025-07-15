@@ -4,6 +4,7 @@ from .. import lists
 from . import functions
 from ..tools import bones_mapping_panel
 from ..tools import bone_rotation_panel
+from ..tools import other_tools_panel
 
 class VIEW3D_PT_main_panel(bpy.types.Panel):
     bl_label = "To UE4 Execute"
@@ -14,9 +15,9 @@ class VIEW3D_PT_main_panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        col = layout.column(align=True)
-        grid = col.grid_flow(row_major=True)
-        row = grid.row(align=True)
+        main_col = layout.column(align=True)
+        box = main_col.box()
+        col = box.column()
 
         shared_functions.label_multiline(context=context,
                         text='Click button after selecting MMD mesh',
@@ -30,23 +31,14 @@ class VIEW3D_PT_main_panel(bpy.types.Panel):
 
         col.prop(context.scene, "arms_reverse", text="Reverse Arm Roll")
 
-class bone_pose_panel(bpy.types.Panel):
-    bl_label = "Pose Bones"
-    bl_idname = "CD_PT_pose_bones"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "To UE4"
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column(align=True)
-        grid = col.grid_flow(row_major=True)
-        row = grid.row(align=True)
+        box = main_col.box()
+        col = box.column()
 
         shared_functions.label_multiline(context=context,
                          text="The button below says:'I can help you pose the model to ue4 mannequin after you finishing adjust bones in edit mode, but you can adjust them manully later'",
                          parent=col)
         col.operator('cd_ue4_functions.pose_model', text='Pose Model', icon="POSE_HLT")
+        main_col.separator()
 
 class execute_functions(bpy.types.Operator):
     bl_label = "Execute Functions"
@@ -65,7 +57,7 @@ class execute_functions(bpy.types.Operator):
                 if pb_new is None or pb_old is None:
                     continue
                 # Valid
-                functions.merge_vg(name, newname, newname, selected_obj)
+                other_tools_panel.merge_vg(name, newname, newname, selected_obj)
 
             if selected_obj.parent.type == 'ARMATURE':
                 selected_armature = selected_obj.parent
@@ -182,7 +174,7 @@ class execute_functions(bpy.types.Operator):
                 armature.edit_bones["ik_hand_r"].roll = armature.edit_bones["hand_r"].roll
 
                 for child_name , parent_name in lists.reparent_list:
-                    bones_mapping_panel.bind_bone_to_parent(armature, child_name, parent_name)
+                    bones_mapping_panel.reparent_bones(armature, child_name, parent_name)
                 
         return{'FINISHED'}
 
@@ -223,7 +215,6 @@ classList = {
     execute_functions,
     pose_model,
     VIEW3D_PT_main_panel,
-    bone_pose_panel,
 }
 
 def register():

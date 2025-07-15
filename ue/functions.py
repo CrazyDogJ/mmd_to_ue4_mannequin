@@ -3,17 +3,6 @@ import math
 import mathutils
 
 # Functions
-def rename_vertex_groups(mesh_obj, name_list):
-    vertex_groups = mesh_obj.vertex_groups
-    for name, newname in name_list:
-        idx = vertex_groups.find(name)
-        if idx != -1:
-            vg = vertex_groups[idx]
-            vg.name = newname
-        else: #Not found
-            #Do something
-            pass
-
 def add_new_bone(armature_data, name, new_bone_head, new_bone_tail):
     new_bone = armature_data.edit_bones.new(name)
     new_bone.head = new_bone_head
@@ -107,27 +96,3 @@ def survey(obj):
             if (maxWeight.get(gn) is None or w>maxWeight[gn]):
                 maxWeight[gn] = w
     return maxWeight
-
-def merge_vg(vgroup_A_name, vgroup_B_name, vgroup_new_name, ob):
-    if (vgroup_A_name in ob.vertex_groups and
-    vgroup_B_name in ob.vertex_groups):
-
-        vgroup = ob.vertex_groups.new(name=vgroup_A_name+"+"+vgroup_B_name)
-
-        for id, vert in enumerate(ob.data.vertices):
-            available_groups = [v_group_elem.group for v_group_elem in vert.groups]
-            A = B = 0
-            if ob.vertex_groups[vgroup_A_name].index in available_groups:
-                A = ob.vertex_groups[vgroup_A_name].weight(id)
-            if ob.vertex_groups[vgroup_B_name].index in available_groups:
-                B = ob.vertex_groups[vgroup_B_name].weight(id)
-
-            # only add to vertex group is weight is > 0
-            sum = A + B
-            if sum > 0:
-                vgroup.add([id], sum ,'REPLACE')
-
-        ob.vertex_groups.remove(ob.vertex_groups[vgroup_A_name])
-        ob.vertex_groups.remove(ob.vertex_groups[vgroup_B_name])
-        vgroup.name = vgroup_new_name
-        vgroup = ob.vertex_groups.new(name=vgroup_A_name)

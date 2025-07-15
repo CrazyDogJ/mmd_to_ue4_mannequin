@@ -1,6 +1,29 @@
 import bpy
 from .. import shared_functions
 
+def merge_vg(vgroup_A_name, vgroup_B_name, vgroup_new_name, ob):
+    if (vgroup_A_name in ob.vertex_groups and
+    vgroup_B_name in ob.vertex_groups):
+
+        vgroup = ob.vertex_groups.new(name=vgroup_A_name+"+"+vgroup_B_name)
+
+        for id, vert in enumerate(ob.data.vertices):
+            available_groups = [v_group_elem.group for v_group_elem in vert.groups]
+            A = B = 0
+            if ob.vertex_groups[vgroup_A_name].index in available_groups:
+                A = ob.vertex_groups[vgroup_A_name].weight(id)
+            if ob.vertex_groups[vgroup_B_name].index in available_groups:
+                B = ob.vertex_groups[vgroup_B_name].weight(id)
+
+            # only add to vertex group is weight is > 0
+            sum = A + B
+            if sum > 0:
+                vgroup.add([id], sum ,'REPLACE')
+
+        ob.vertex_groups.remove(ob.vertex_groups[vgroup_A_name])
+        ob.vertex_groups.remove(ob.vertex_groups[vgroup_B_name])
+        vgroup.name = vgroup_new_name
+
 class CDTOOLS_PT_UsefulToolsPanel(bpy.types.Panel):
     bl_label = "Useful tools"
     bl_idname = "VIEW3D_PT_useful_tools"
@@ -23,6 +46,12 @@ class CDTOOLS_PT_UsefulToolsPanel(bpy.types.Panel):
         box = col.box()
         box.label(text="Description", icon="QUESTION")
         shared_functions.label_multiline(context, text="mmd_skel is active, ref_skel is other selcted", parent=box)
+
+        col.separator()
+        col.operator("cdtools.combine_vertex_groups", icon="FILE_REFRESH", text="Combine Vertex Groups")
+        box = col.box()
+        box.label(text="Description", icon="QUESTION")
+        shared_functions.label_multiline(context, text="combine two vertex groups to new one", parent=box)
 
 class CDTOOLS_OT_AddVertexGroupsFromBones(bpy.types.Operator):
     """从选中的骨骼向目标网格添加对应的顶点组"""
@@ -100,10 +129,32 @@ class CDTOOLS_OT_AlignBonesOperator(bpy.types.Operator):
         
         return {'FINISHED'}
 
+class CDTOOLS_OT_CombineVertexGroups(bpy.types.Operator):
+    bl_label = "Combine Vertex Groups"
+    bl_idname = "cdtools.combine_vertex_groups"
+
+    group_1_name: bpy.props.StringProperty()
+    group_2_name: bpy.props.StringProperty()
+    group_new_name: bpy.props.StringProperty()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "group_1_name", text="Group A")
+        layout.prop(self, "group_2_name", text="Group B")
+        layout.prop(self, "group_new_name", text="New Group")
+
+    def execute(self, context):
+        merge_vg(vgroup_A_name=self.group_1_name, vgroup_B_name=self.group_2_name, vgroup_new_name=self.group_new_name, ob=context.active_object)
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
 classes = {
     CDTOOLS_PT_UsefulToolsPanel,
     CDTOOLS_OT_AddVertexGroupsFromBones,
     CDTOOLS_OT_AlignBonesOperator,
+    CDTOOLS_OT_CombineVertexGroups,
 }
 
 def register():
