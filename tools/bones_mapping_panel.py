@@ -6,6 +6,7 @@ mapping_type = [
     ('MODE_Bone_Rename', "Bone Rename Mode", "Bone Rename Mode"),
     ('MODE_Vertex_Group_Rename', "Vertex Group Rename Mode", "Vertex Group Rename Mode"),
     ('MODE_Bone_Reparent', "Bone Reparent Mode", "Bone Reparent Mode"),
+    ('MODE_Bone_Mmd_Name', "MMD Bone Name Mode", "MMD Bone Name Mode")
 ]
 
 def rename_vertex_groups(mesh_obj, name_list, bone1_to_bone2):
@@ -55,6 +56,16 @@ def reparent_bones(armature_data, name_list, bone1_to_bone2):
                 child_bone.parent = parent_bone
             else:
                 child_bone.parent = None
+
+def name_mmd_bones(armature_data, name_list, bone1_to_bone2):
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for item in name_list:
+        if bone1_to_bone2:
+            found_bone = armature_data.pose.bones[item.bone1]
+            found_bone.mmd_bone.name_j=item.bone2
+        else:
+            found_bone = armature_data.pose.bones[item.bone2]
+            found_bone.mmd_bone.name_j=item.bone1
 
 class CDTOOLS_PairBonesGroupProperty(bpy.types.PropertyGroup):
     bone1: bpy.props.StringProperty(
@@ -123,7 +134,7 @@ class CDTOOLS_PT_BoneMappingRenamePanel(bpy.types.Panel):
         col.operator("cdtools_bones_pair.rename", icon="EVENT_RIGHT_ARROW", text="").bone1_to_bone2 = True
         col.operator("cdtools_bones_pair.rename", icon="EVENT_LEFT_ARROW", text="").bone1_to_bone2 = False
 
-        box_main_col.prop(scene, "cdtools_rename_vertex_group_mode", text="Rename Vertex Group Mode")
+        ##box_main_col.prop(scene, "cdtools_rename_vertex_group_mode", text="Rename Vertex Group Mode")
 
         main_col.separator()
         box = main_col.box()
@@ -282,6 +293,12 @@ class CDTOOLS_OT_MappingOperation(bpy.types.Operator):
                 armature = selected_armature.data
                 for item in scene.cdtools_mapping_items:
                     reparent_bones(armature_data=armature, name_list=scene.cdtools_mapping_items, bone1_to_bone2=self.bone1_to_bone2)
+        elif context.scene.cdtools_mapping_mode == "MODE_Bone_Mmd_Name":
+            if selected_obj.type == 'ARMATURE':
+                selected_armature = selected_obj
+                selected_armature.select_set(True)
+                bpy.context.view_layer.objects.active = selected_armature
+                name_mmd_bones(armature_data=selected_armature, name_list=scene.cdtools_mapping_items, bone1_to_bone2=self.bone1_to_bone2)
         return{'FINISHED'}
 
 # Op : Update selected object active vertex group

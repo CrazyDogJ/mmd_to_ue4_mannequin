@@ -70,7 +70,18 @@ class execute_functions(bpy.types.Operator):
                 armature.name = "root"
 
                 # Execute rename
-                bones_mapping_panel.rename_bones(armature, lists.namelist, bone1_to_bone2=True)
+                bpy.ops.object.mode_set(mode='EDIT')
+                for item in lists.namelist:
+                    name = item[0]
+                    newname = item[1]
+                    idx = armature.edit_bones.find(name)
+                    if idx != -1:
+                        bo = armature.edit_bones[idx]
+                        bo.name = newname
+                    else: #Not found
+                        #Do something
+                        pass
+                    
                 # Remove empty weight vertex groups
                 functions.delete_empty_vertex_groups(selected_obj.parent, selected_obj, lists.bones_ignore)
 
@@ -82,7 +93,7 @@ class execute_functions(bpy.types.Operator):
                     bone.use_connect = False
 
                 # Rotate spine bones
-                for name, axis, degree in list.spine_rot_list:
+                for name, axis, degree in lists.spine_rot_list:
                     bone_rotation_panel.rotate_bone_local_axis_edit_mode(armature, name, axis, degree)
 
                 # Execute arm reverse
@@ -174,7 +185,14 @@ class execute_functions(bpy.types.Operator):
                 armature.edit_bones["ik_hand_r"].roll = armature.edit_bones["hand_r"].roll
 
                 for child_name , parent_name in lists.reparent_list:
-                    bones_mapping_panel.reparent_bones(armature, child_name, parent_name)
+                    child_bone = armature.edit_bones.get(child_name)
+                    parent_bone = armature.edit_bones.get(parent_name)
+
+                    if child_bone:
+                        if parent_bone:
+                            child_bone.parent = parent_bone
+                        else:
+                            child_bone.parent = None
                 
         return{'FINISHED'}
 
