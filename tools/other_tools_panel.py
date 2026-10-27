@@ -1,5 +1,8 @@
 import bpy
+from . import mirror_extend
 from .. import shared_functions
+from . import dcc_blender_rig
+from . import remove_unused_bones
 
 def merge_vg(vgroup_A_name, vgroup_B_name, vgroup_new_name, ob):
     if (vgroup_A_name in ob.vertex_groups and
@@ -52,6 +55,18 @@ class CDTOOLS_PT_UsefulToolsPanel(bpy.types.Panel):
         box = col.box()
         box.label(text="Description", icon="QUESTION")
         shared_functions.label_multiline(context, text="combine two vertex groups to new one", parent=box)
+
+        col.separator()
+        col.operator("dcc.build_blender_rig", icon="FILE_REFRESH", text="Build Blender Rig From Other DCC")
+        box = col.box()
+        box.label(text="Description", icon="QUESTION")
+        shared_functions.label_multiline(context, text="build a blender version's rig from the rig exported by other dcc", parent=box)
+
+        col.separator()
+        col.operator("rub.removebones", text="Remove Unused Bones")
+        box = col.box()
+        box.label(text="Description", icon="QUESTION")
+        shared_functions.label_multiline(context, text="select a armature and it will remove unused bones in it.", parent=box)
 
 class CDTOOLS_OT_AddVertexGroupsFromBones(bpy.types.Operator):
     """从选中的骨骼向目标网格添加对应的顶点组"""
@@ -158,9 +173,15 @@ classes = {
 }
 
 def register():
+    dcc_blender_rig.register()
+    mirror_extend.register()
+    remove_unused_bones.register()
     for cls in classes:
         bpy.utils.register_class(cls)
 
 def unregister():
+    dcc_blender_rig.unregister()
+    mirror_extend.unregister()
+    remove_unused_bones.unregister()
     for cls in classes:
         bpy.utils.unregister_class(cls)

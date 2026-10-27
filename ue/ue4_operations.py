@@ -11,7 +11,7 @@ class VIEW3D_PT_main_panel(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_To_UE4_Execute"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "To UE4"
+    bl_category = "Cd Tools"
 
     def draw(self, context):
         layout = self.layout
@@ -29,6 +29,7 @@ class VIEW3D_PT_main_panel(bpy.types.Panel):
                          text='If arm bones are reverse, just make below true.',
                          parent=col)
 
+        main_col.separator()
         col.prop(context.scene, "arms_reverse", text="Reverse Arm Roll")
 
         box = main_col.box()
