@@ -127,6 +127,9 @@ class CDTOOLS_PT_BoneMappingRenamePanel(bpy.types.Panel):
         import_op.target_var = "cdtools_mapping_items"
         import_op.target_index = "cdtools_mapping_index"
 
+        export_op = col.operator("cdtools_bones_pair.export_file", icon="EXPORT", text="")
+        export_op.target_var = "cdtools_mapping_items"
+
         col.operator("cdtools_bones_pair.clear_mapping", icon="X", text="").target_var = "cdtools_mapping_items"
 
         col.separator()
@@ -214,6 +217,45 @@ class CDTOOLS_OT_ClearMapping(bpy.types.Operator):
             target.clear()
 
         return {'FINISHED'}
+
+def export_list_to_txt(filepath, string_list : dict):
+    with open(filepath, 'w', encoding='utf-8') as f:
+        for item in string_list:
+            f.write(item + "," + string_list[item] + '\n')  # 每个字符串占一行
+
+class CDTOOLS_OT_ExportFile(bpy.types.Operator):
+    bl_idname = "cdtools_bones_pair.export_file"
+    bl_label = "Export file"
+
+    target_var: bpy.props.StringProperty() # type: ignore
+
+    filepath: bpy.props.StringProperty(
+        name="Export",
+        description="Export file path",
+        subtype='FILE_PATH'  # 使其成为一个文件路径
+    ) # type: ignore
+    filename_ext = ".txt"
+    filter_glob: bpy.props.StringProperty(
+        default="*.txt",
+        options={'HIDDEN'},
+        maxlen=255,
+    ) # type: ignore
+
+    def execute(self, context):
+        export_set = {}
+        scene = context.scene
+        target_getVar = getattr(scene, self.target_var, None)
+        if target_getVar is not None and isinstance(target_getVar, bpy.types.bpy_prop_collection):
+            for item in target_getVar:
+                export_set[item.bone1] = item.bone2
+            export_list_to_txt(self.filepath, export_set)
+        return {'FINISHED'}
+    
+    # 打开文件浏览器
+    def invoke(self, context, event):
+        # 弹出文件浏览器，选择文件
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
 class CDTOOLS_OT_ImportFromFile(bpy.types.Operator):
     bl_idname = "cdtools_bones_pair.import_from_file"
@@ -343,6 +385,7 @@ classes = {
     CDTOOLS_OT_LoadFromDefault,
     CDTOOLS_OT_ClearMapping,
     CDTOOLS_OT_ImportFromFile,
+    CDTOOLS_OT_ExportFile,
 
     CDTOOLS_OT_MappingOperation,
 }
